@@ -35,6 +35,7 @@ aws-devops-portfolio/
 │       └── prod.yml
 └── README.md
 ________________________________________
+<<<<<<< HEAD
 ⚙️ Step 3: Terraform Setup
 root@ip-172-31-25-109://root/terraform# ls -larth
 total 20K
@@ -878,7 +879,7 @@ AWS_ACCOUNT_ID
 ECR_REPO_NAME	fargate-app
 
 
-
+.
  
 🔸 Create IAM User for GitHub Actions or full Admin Access
 •	Go to AWS IAM → Users → Add User
@@ -1021,11 +1022,65 @@ env:
   TASK_FAMILY: fargate-task-prod
   SERVICE_NAME: fargate-service-prod
   CLUSTER_NAME: fargate-cluster-prod
+=======
+⚙️ Step 2: Setup Docker App
+app/Dockerfile
+Dockerfile
+CopyEdit
+FROM node:18-alpine
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["node", "app.js"]
+________________________________________
+🌍 Step 3: Create Terraform Code Per Environment
+Each folder (dev, staging, prod) must have:
+•	main.tf
+•	variables.tf
+•	outputs.tf
+•	provider.tf
+🔁 Repeat your current working prod Terraform files for dev and staging, update:
+•	Cluster name
+•	ECS service name
+•	Task family name
+•	ECR image (tag as :dev, :staging, :latest)
+________________________________________
+🔐 Step 4: Configure GitHub Secrets
+In your GitHub repo, go to Settings → Secrets and variables → Actions
+Create the following secrets:
+Name	Value
+AWS_ACCESS_KEY_ID	Your AWS access key
+AWS_SECRET_ACCESS_KEY	Your AWS secret
+AWS_REGION	ap-southeast-1
+AWS_ACCOUNT_ID	Your AWS account ID
+________________________________________
+⚡ Step 5: Setup GitHub Workflows
+Example: .github/workflows/dev.yml
+yaml
+CopyEdit
+name: Deploy to Dev
+
+on:
+  push:
+    branches:
+      - dev
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  ECR_REPO_NAME: fargate-app
+  CLUSTER_NAME: fargate-cluster-dev
+  SERVICE_NAME: fargate-service-dev
+  TASK_FAMILY: fargate-task-dev
+>>>>>>> 79ff612c565875f4a9e7de6c662186b8d43da042
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+<<<<<<< HEAD
       - uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
@@ -1051,11 +1106,45 @@ jobs:
             --cluster $CLUSTER_NAME \
             --service $SERVICE_NAME \
             --force-new-deployment
+=======
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to ECR
+      run: |
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+    - name: Build, Tag, Push Image
+      run: |
+        docker build -t $ECR_REPO_NAME ./app
+        docker tag $ECR_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:dev
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:dev
+
+    - name: Deploy to ECS
+      run: |
+        aws ecs update-service \
+          --cluster $CLUSTER_NAME \
+          --service $SERVICE_NAME \
+          --force-new-deployment
+>>>>>>> 79ff612c565875f4a9e7de6c662186b8d43da042
 🔁 Copy this for staging.yml and prod.yml, update:
 •	ECR image tag to :staging or :latest
 •	ECS cluster/service/task names
 ________________________________________
 🌐 Step 6: Deploy Terraform Infra
+<<<<<<< HEAD
+=======
+Per environment:
+bash
+CopyEdit
+>>>>>>> 79ff612c565875f4a9e7de6c662186b8d43da042
 cd terraform/dev
 terraform init
 terraform apply
@@ -1071,6 +1160,7 @@ terraform apply
 ________________________________________
 🚀 Step 7: Workflow In Action
 Make code changes to the app:
+<<<<<<< HEAD
 # Push to dev
 git checkout dev
 git add .
@@ -1086,6 +1176,15 @@ git push origin staging
 git checkout prod
 git merge staging
 git push origin prod
+=======
+bash
+CopyEdit
+git checkout dev
+# edit app.js
+git add .
+git commit -m "Update Dev App"
+git push origin dev
+>>>>>>> 79ff612c565875f4a9e7de6c662186b8d43da042
 ✅ This triggers:
 •	Docker build
 •	Push to ECR with :dev tag
@@ -1101,6 +1200,16 @@ o	How to deploy and test
 o	GitHub Actions logs
 o	App running on dev, staging, prod URLs
 o	Terraform apply output
+<<<<<<< HEAD
+=======
+________________________________________
+Let me know if you'd like me to generate the sample README.md or CI/CD diagram next!
+
+
+
+
+
+>>>>>>> 79ff612c565875f4a9e7de6c662186b8d43da042
 
 
 
@@ -1186,10 +1295,60 @@ Each time a branch is pushed:
 3.	Triggers ECS service update with force new deployment
 4.	ECS pulls the new image and deploys it
 5.	ALB serves the application
+<<<<<<< HEAD
+=======
+________________________________________
+🧪 How to Test
+bash
+CopyEdit
+# Test Dev
+git checkout dev
+echo "console.log('Hello from Dev')" >> app/app.js
+git commit -am "Update Dev App"
+git push origin dev
+
+# Test Staging
+git checkout staging
+echo "console.log('Hello from Staging')" >> app/app.js
+git commit -am "Update Staging App"
+git push origin staging
+
+# Test Prod
+git checkout prod
+echo "console.log('Hello from Prod')" >> app/app.js
+git commit -am "Update Prod App"
+git push origin prod
+Then, open the ALB DNS URL (from terraform output alb_dns) in your browser to verify.
+________________________________________
+🛡️ GitHub Secrets Required
+Name	Description
+AWS_ACCESS_KEY_ID	AWS IAM access key
+AWS_SECRET_ACCESS_KEY	AWS IAM secret key
+AWS_REGION	e.g., ap-southeast-1
+AWS_ACCOUNT_ID	Your 12-digit AWS account ID
+________________________________________
+✅ How to Deploy Terraform
+bash
+CopyEdit
+cd terraform/dev      # or staging/prod
+terraform init
+terraform apply
+________________________________________
+📷 Screenshots (optional)
+You can upload screenshots of:
+•	GitHub Actions logs for each branch
+•	ECS task running on AWS console
+•	Web app shown via the ALB DNS URL
+________________________________________
+>>>>>>> 79ff612c565875f4a9e7de6c662186b8d43da042
 📌 Author
 Jomari R. Samson
 📧 zjrsamson07@gmail.com
 📍 Sta. Maria, Bulacan
 🌐 GitHub: jrstech-ops
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> 79ff612c565875f4a9e7de6c662186b8d43da042
 
