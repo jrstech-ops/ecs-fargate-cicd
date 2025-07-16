@@ -1,12 +1,7 @@
-# 🚀 Multi-Environment ECS Fargate Deployment with Terraform & GitHub Actions
+🚀 Multi-Environment ECS Fargate Deployment with Terraform & GitHub Actions
+This project demonstrates a fully automated CI/CD pipeline that deploys a Dockerized Node.js app to Amazon ECS Fargate across three environments: dev, staging, and prod. It uses Terraform for infrastructure provisioning and GitHub Actions for continuous integration and deployment.
 
-This project demonstrates a fully automated CI/CD pipeline that deploys a Dockerized Node.js app to **Amazon ECS Fargate** across three environments: `dev`, `staging`, and `prod`. It uses **Terraform** for infrastructure provisioning and **GitHub Actions** for continuous integration and deployment.
-
----
-
-## 📐 Architecture Overview
-
-```text
+📐 Architecture Overview
 ┌───────────────┐         ┌────────────────────┐
 │ GitHub Repo   │  Push   │ GitHub Actions     │
 │ (dev/staging/ │ ──────▶ │ CI/CD Pipelines    │
