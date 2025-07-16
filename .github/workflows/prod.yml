@@ -1,0 +1,46 @@
+name: Deploy to ECS Fargate (prod)
+
+on:
+  push:
+    branches: [prod]
+
+env:
+  AWS_REGION: ap-southeast-1
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  ENVIRONMENT: prod
+  ECR_REPO_NAME: fargate-app
+  ECR_IMAGE: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com/fargate-app:prod
+  TASK_FAMILY: fargate-task-prod
+  SERVICE_NAME: fargate-service-prod
+  CLUSTER_NAME: fargate-cluster-prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION \
+          | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      - name: Build and Push Docker image
+        run: |
+          docker build -t $ECR_IMAGE ./app
+          docker push $ECR_IMAGE
+
+      - name: Force new ECS Deployment
+        run: |
+          aws ecs update-service \
+            --cluster $CLUSTER_NAME \
+            --service $SERVICE_NAME \
+            --force-new-deployment
+
